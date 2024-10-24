@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import Dashboard from './components/Dashboard.vue';
   import VBarChart from './components/VBarCharts/VBarChart.vue';
+  import VPieChart from './components/VPieCharts/VPieChart.vue';
 </script>
 
 <template>
@@ -13,6 +14,9 @@
     </a>
   </div> -->
   <VBarChart/>
+  <div class="pie-chart-container">
+    <VPieChart />
+  </div>
 </template>
 
 <style scoped>
@@ -27,5 +31,11 @@
 }
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
+}
+
+.pie-chart-container {
+  background-color: #1C232E;
+  padding: 24px;
+  border-radius: 16px;
 }
 </style>

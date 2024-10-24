@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Traffic composition</title>
+    <style>
+      .pie-chart {
+        background-color: #1C232E;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font-family: "Golos Text", sans-serif;
+      }
+
+      .pie-chart-wrapper {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .pie-chart-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-right: 10px;
+      }
+
+      .pie-chart-title {
+        color: var(--text-secondary, #B1B9C2);
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 16px; /* 100% */
+        letter-spacing: 0.16px;
+        text-align: left;
+        align-self: flex-start;
+      }
+
+      .legend {
+        max-width: 305px;
+        width: 60%;
+        color: var(--text-primary, #E3EBF3);
+        line-height: 24px; /* 171.429% */
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .legend-label {
+        margin-right: auto;
+        font-size: 14px;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pie-chart">
+      <div class="pie-chart-title">Traffic composition</div>
+      <div class="pie-chart-wrapper">
+        <div
+          class="pie-chart-container"
+          id="pieChartContainer"
+        ></div>
+        <div
+          class="legend"
+          id="legend"
+        ></div>
+      </div>
+    </div>
+    <script>
+      // Пример данных для диаграммы
+      let data = [
+        { label: 'Buses', value: 3, color: '#049A8C' },
+        { label: 'Trucks', value: 7, color: '#DE9C19' },
+        { label: 'Cars', value: 61, color: '#FF606E' },
+        { label: 'Mini buses', value: 17, color: '#42C777' },
+        { label: 'Motorcycles', value: 5, color: '#AD6CC3' },
+        { label: 'Mini trucks', value: 10, color: '#2E7AE5' },
+      ];
+
+      setTimeout(() => {
+        data = [
+          { label: 'Buses', value: 10, color: '#049A8C' },
+          { label: 'Trucks', value: 2, color: '#DE9C19' },
+          { label: 'Cars', value: 61, color: '#FF606E' },
+          { label: 'Mini buses', value: 22, color: '#42C777' },
+        ];
+        drawPieChart(data); // Перерисовка диаграммы
+      }, 5000);
+
+      const drawPieChart = (data) => {
+        // Устанавливаем размеры и радиусы
+        const width = 200;
+        const height = 200;
+        const outerRadius = Math.min(width, height) / 2; 
+        const innerRadius = outerRadius * 0.7; 
+
+        // Удаляем старую диаграмму
+        d3.select("#pieChartContainer").selectAll("*").remove();
+
+        // Удаляем старую легенду
+        d3.select("#legend").selectAll("*").remove();
+
+        // Создаем SVG элемент
+        const svg = d3
+          .select("#pieChartContainer")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .append("g")
+          .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // Генератор круговой диаграммы
+        const pie = d3
+          .pie()
+          .value(d => d.value)
+          .sort(null) 
+          .padAngle(0.03); 
+
+        const arc = d3
+          .arc()
+          .innerRadius(innerRadius) 
+          .outerRadius(outerRadius) 
+          .cornerRadius(3); 
+
+        // Создаем группы для каждого сегмента
+        const arcs = svg
+          .selectAll(".arc")
+          .data(pie(data))
+          .enter()
+          .append("g")
+          .attr("class", "arc");
+
+        // Добавляем анимацию при появлении сегментов
+        arcs
+          .append("path")
+          .attr("d", arc)
+          .attr("fill", (d) => d.data.color)
+          .attr('d', d => arc({ ...d, endAngle: d.startAngle }))
+          .transition()
+          .duration(800)
+          .attrTween('d', function (d) {
+              const interpolate = d3.interpolate({ startAngle: d.startAngle, endAngle: d.startAngle }, d);
+              return t => arc(interpolate(t));
+            })
+          .delay((d, i) => i * 400);
+
+        // Заполняем легенду
+        const legend = d3.select("#legend");
+        
+        data.forEach(item => {
+          legend
+            .append("div")
+            .attr("class", "legend-item")
+            .html(`
+                <div class="legend-color" style="background-color:${item.color};"></div>
+                <div class="legend-label">${item.label}:</div> ${item.value}%
+            `);
+        });
+      };
+
+      // Изначальная отрисовка диаграммы
+      drawPieChart(data);
+    </script>
+  </body>
+</html>
