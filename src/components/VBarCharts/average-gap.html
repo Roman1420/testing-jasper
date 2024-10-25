@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
-  <title>Average speed Indicator</title>
+  <title>Average gap Indicator</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     body {
@@ -81,10 +81,10 @@
 <body>
   <script>
     // Indicator value
-    const indicatorValue = 37;
-    const diagramTitle = 'Average speed';
+    const indicatorValue = 25;
+    const diagramTitle = 'Average gap';
     const diagramUnit = indicatorValue > 0 
-      ? 'km/h' 
+      ? 'm' 
       : 'no data';
     // Diagram params
     const svgWidth = 58;
@@ -92,7 +92,7 @@
     const maxHeight = 100;
     const duration = 1000;
 
-    const fill = '#FF6875';
+    const fill = '#42C777';
 
     const dropShadow = `drop-shadow(0px 41.778px 33.422px rgba(200, 62, 62, 0.14)) 
       drop-shadow(0px 22.336px 17.869px rgba(200, 62, 62, 0.12)) 

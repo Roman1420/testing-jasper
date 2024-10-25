@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
-  <title>Average speed Indicator</title>
+  <title>Occupancy Indicator</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     body {
@@ -81,10 +81,10 @@
 <body>
   <script>
     // Indicator value
-    const indicatorValue = 37;
-    const diagramTitle = 'Average speed';
+    const indicatorValue = 55;
+    const diagramTitle = 'Occupancy';
     const diagramUnit = indicatorValue > 0 
-      ? 'km/h' 
+      ? '%' 
       : 'no data';
     // Diagram params
     const svgWidth = 58;
