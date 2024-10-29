@@ -9,7 +9,7 @@
   <title>Average speed Indicator</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
-    body {
+    .diagram-wrapper {
       background-color: #1C232E;
       font-family: "Golos Text", sans-serif;
       display: flex;
@@ -102,7 +102,10 @@
 
     const body = d3.select('body');
 
-    const diagramContainer = body.append('div')
+    const diagramWrapper = body.append('div')
+      .attr('class', 'diagram-wrapper');
+
+    const diagramContainer = diagramWrapper.append('div')
       .attr('class', 'diagram-container');
 
     const diagramText = diagramContainer.append('div')
@@ -127,7 +130,7 @@
       .text(diagramTitle);
 
     // Indicator
-    const svg = body.append('svg')
+    const svg = diagramWrapper.append('svg')
       .attr('class', 'diagram-indicator')
       .attr('width', svgWidth)
       .attr('height', svgHeight)
