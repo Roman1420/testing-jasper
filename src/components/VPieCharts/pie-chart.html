@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <title>Traffic composition</title>
     <style>
@@ -10,6 +11,9 @@
         background-color: #1C232E;
         width: 100%;
         height: 100%;
+        padding: 24px;
+        box-sizing: border-box;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -40,6 +44,31 @@
         letter-spacing: 0.16px;
         text-align: left;
         align-self: flex-start;
+        padding-left: 10px;
+      }
+
+      .pie-chart-no-data {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 8px;
+        height: 100%;
+        padding-left: 10px;
+        color: var(--text-secondary, #4E5A6C);
+        font-size: 24px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 40px; /* 166.667% */
+        letter-spacing: 0.24px;
+      }
+
+      .pie-chart-no-data-description {
+        color: var(--text-tertiary, #76879F);
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 14px;
       }
 
       .legend {
@@ -75,19 +104,6 @@
     </style>
   </head>
   <body>
-    <div class="pie-chart">
-      <div class="pie-chart-title">Traffic composition</div>
-      <div class="pie-chart-wrapper">
-        <div
-          class="pie-chart-container"
-          id="pieChartContainer"
-        ></div>
-        <div
-          class="legend"
-          id="legend"
-        ></div>
-      </div>
-    </div>
     <script>
       // Пример данных для диаграммы
       let data = [
@@ -109,27 +125,72 @@
         drawPieChart(data); // Перерисовка диаграммы
       }, 5000);
 
+      setTimeout(() => {
+        data = [];
+        drawPieChart(data); // Перерисовка диаграммы
+      }, 11000);
+
+      const pieChartTitle = 'Traffic composition';
+      const noData = 'No data';
+      const noDataSub = 'Try again Later';
+
+      const svgWidth = 220;
+      const svgHeight = 220;
+      const outerRadius = 100;
+      const innerRadius = outerRadius * 0.7;
+      const duration = 800;
+
+      const body = d3.select('body');
+      const pieChart = body
+        .append('div')
+        .attr('class', 'pie-chart');
+
+      // функция отрисовки
       const drawPieChart = (data) => {
-        // Устанавливаем размеры и радиусы
-        const width = 200;
-        const height = 200;
-        const outerRadius = Math.min(width, height) / 2; 
-        const innerRadius = outerRadius * 0.7; 
+        // очищаем содержимое контейнера
+        pieChart.selectAll('*').remove();
 
-        // Удаляем старую диаграмму
-        d3.select("#pieChartContainer").selectAll("*").remove();
+        pieChart
+          .append('div')
+          .attr('class', 'pie-chart-title')
+          .text(pieChartTitle);
 
-        // Удаляем старую легенду
-        d3.select("#legend").selectAll("*").remove();
+        // если данных нет
+        if (!data || !data.length) {
+          const pieChartNoDataContainer = pieChart
+            .append('div')
+            .attr('class', 'pie-chart-no-data');
+          
+          pieChartNoDataContainer
+            .append('div')
+            .text(noData);
+          pieChartNoDataContainer
+            .append('div')
+            .attr('class', 'pie-chart-no-data-description')
+            .text(noDataSub);
+            
+          return;
+        }
+
+        const pieChartWrapper = pieChart
+          .append('div')
+          .attr('class', 'pie-chart-wrapper');
+
+        const pieChartContainer = pieChartWrapper
+          .append('div')
+          .attr('class', 'pie-chart-container');
+
+        const pieChartLegend = pieChartWrapper
+          .append('div')
+          .attr('class', 'legend');
 
         // Создаем SVG элемент
-        const svg = d3
-          .select("#pieChartContainer")
+        const svg = pieChartContainer
           .append("svg")
-          .attr("width", width)
-          .attr("height", height)
+          .attr("width", svgWidth)
+          .attr("height", svgHeight)
           .append("g")
-          .attr("transform", `translate(${width / 2}, ${height / 2})`);
+          .attr("transform", `translate(${svgWidth / 2}, ${svgHeight / 2})`);
 
         // Генератор круговой диаграммы
         const pie = d3
@@ -140,9 +201,9 @@
 
         const arc = d3
           .arc()
-          .innerRadius(innerRadius) 
-          .outerRadius(outerRadius) 
-          .cornerRadius(3); 
+          .innerRadius(innerRadius)
+          .outerRadius(outerRadius)
+          .cornerRadius(3);
 
         // Создаем группы для каждого сегмента
         const arcs = svg
@@ -152,31 +213,52 @@
           .append("g")
           .attr("class", "arc");
 
-        // Добавляем анимацию при появлении сегментов
-        arcs
-          .append("path")
-          .attr("d", arc)
-          .attr("fill", (d) => d.data.color)
-          .attr('d', d => arc({ ...d, endAngle: d.startAngle }))
-          .transition()
-          .duration(800)
-          .attrTween('d', function (d) {
-              const interpolate = d3.interpolate({ startAngle: d.startAngle, endAngle: d.startAngle }, d);
-              return t => arc(interpolate(t));
-            })
-          .delay((d, i) => i * 400);
+        // Добавляем анимацию при появлении сегментов и создаем цветные фильтры
+        arcs.each(function(d, i) {
+          const group = d3.select(this);
+          const color = d.data.color;
+
+          // Создаем фильтр для тени
+          svg.append("defs")
+            .append("filter")
+            .attr("id", `shadow-${d.data.label.replace(/\s+/g, '')}`)
+            .append("feDropShadow")
+            .attr("dx", "0")
+            .attr("dy", "3")
+            .attr("stdDeviation", d.data.value > 10 ? '4' : '2')
+            .attr("flood-color", d3.rgb(color).darker(1.5))
+
+          // Добавляем путь с тенью
+          group.append("path")
+              .attr('d', d => arc({ ...d, endAngle: d.startAngle }))
+              .attr("fill", color)
+              .attr('filter', `url(#shadow-${d.data.label.replace(/\s+/g, '')})`) // Применяем цветную тень
+              .transition()
+              .duration(duration)
+              .attrTween('d', function (d) {
+                  const interpolate = d3.interpolate({ startAngle: d.startAngle, endAngle: d.startAngle }, d);
+                  return t => arc(interpolate(t));
+              })
+              .delay(i * (duration / 2));
+        });
 
         // Заполняем легенду
-        const legend = d3.select("#legend");
-        
         data.forEach(item => {
-          legend
+          const legendItem = pieChartLegend
             .append("div")
-            .attr("class", "legend-item")
-            .html(`
-                <div class="legend-color" style="background-color:${item.color};"></div>
-                <div class="legend-label">${item.label}:</div> ${item.value}%
-            `);
+            .attr("class", "legend-item");
+          
+          legendItem
+            .append('div')
+            .attr('class', 'legend-color')
+            .style('background-color', item.color);
+
+          legendItem
+            .append('div')
+            .attr('class', 'legend-label')
+            .text(`${item.label}:`);
+
+          legendItem.append('span').text(`${item.value}%`);
         });
       };
 
