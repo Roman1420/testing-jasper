@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
+  <title>Linear progress bar</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .bar-wrapper {
+      background-color: #1C232E;
+      font-family: "Golos Text", sans-serif;
+      display: flex;
+      padding: 24px 24px 8px 24px;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 100%;
+    }
+
+    .bar-title {
+      color: var(--text-secondary, #76879F);
+      font-family: "Golos Text", sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 24px;
+    }
+
+    .bar-container {
+      display: flex;
+      padding: 8px 0px;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .percentage-text {
+      color: var(--text-primary, #E3EBF3);
+      font-family: "Golos Text", sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 24px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // Indicator value
+    const progressValue = 0.3; // 30% прогресса
+
+    const height = 32;
+    const barTitle = 'Intensity';
+
+    const dropShadow = `drop-shadow(0px 41.778px 33.422px rgba(62, 150, 200, 0.14))
+      drop-shadow(0px 22.336px 17.869px rgba(62, 134, 200, 0.12))
+      drop-shadow(0px 12.522px 10.017px rgba(62, 101, 200, 0.10))
+      drop-shadow(0px 6.65px 5.32px rgba(62, 117, 200, 0.08))
+      drop-shadow(0px 2.767px 2.214px rgba(62, 125, 200, 0.05))`;
+
+    const barWrapper = d3.select('body')
+      .append('div')
+      .attr('class', 'bar-wrapper')
+
+    barWrapper.append('div')
+      .attr('class', 'bar-title')
+      .text(barTitle);
+
+    const barContainer = barWrapper
+      .append('div')
+      .attr('class', 'bar-container')
+
+    const svg = barContainer
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', height)
+      .style('background', '#1C232E')
+      .style('border-radius', '8px');
+
+    svg.append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', '100%')
+      .attr('height', height)
+      .attr('rx', 8)
+      .style('fill', '#151C27');
+
+    const progressBar = svg.append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', 0)
+      .attr('height', height)
+      .style('fill', '#2E7AE5')
+      .style('filter', dropShadow);
+
+    // Анимация
+    progressBar.transition()
+      .duration(2000)
+      .attr('width', `${progressValue * 100}%`);
+
+    // Линия в центре
+    if (progressValue > 0) {
+      svg.append('line')
+        .attr('x1', '50%')
+        .attr('y1', 0)
+        .attr('x2', '50%')
+        .attr('y2', height)
+        .style('stroke', 'rgba(255, 255, 255, 0.10)');
+    } else {
+      const containerWidth = barContainer.node().getBoundingClientRect().width;
+      const progressValue = 0;
+      const gap = 20;
+      const figureWidth = 48;
+      const numFigures = Math.floor(containerWidth / (gap));
+      let xPosition = -20;
+
+      for (let i = 0; i < numFigures; i++) {
+        svg.append('svg')
+          .attr('width', figureWidth)
+          .attr('height', height)
+          .attr('x', (i * (27)) - 16) // Отступ между фигурами
+          .attr('viewBox', '0 0 48 32')
+          .attr('fill', 'none')
+          .append('path')
+          .attr('d', `M33.9389 -1.77222H47.3027L13.5415 56.2278H0.177734L33.9389 -1.77222Z`)
+          .style('fill', '#1C232E');
+      }
+    }
+
+    // Текст
+    const percentageText = barContainer
+      .append('div')
+      .attr('class', 'percentage-text')
+      .text(progressValue > 0 
+        ? `0%` 
+        : 'No data'
+      );
+
+    // Анимация текста
+    if (progressValue > 0) {
+      percentageText.transition()
+        .duration(2000)
+        .tween("text", function() {
+          const i = d3.interpolate(0, progressValue * 100);
+          return function(t) {
+            d3.select(this).text(`${Math.round(i(t))}%`);
+          };
+        });
+    }
+  </script>
+</body>
+</html>
