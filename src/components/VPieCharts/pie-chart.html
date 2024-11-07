@@ -101,6 +101,23 @@
         font-size: 14px;
         font-weight: 400;
       }
+
+      /* анимация легенды */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .legend-item {
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+      }
     </style>
   </head>
   <body>
@@ -243,10 +260,11 @@
         });
 
         // Заполняем легенду
-        data.forEach(item => {
+        data.forEach((item, index) => {
           const legendItem = pieChartLegend
             .append("div")
-            .attr("class", "legend-item");
+            .attr("class", "legend-item")
+            .style("animation-delay", `${index * duration / 2}ms`); // Задержка для каждой легенды
           
           legendItem
             .append('div')
