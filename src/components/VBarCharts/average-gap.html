@@ -65,16 +65,20 @@
       align-items: center;
     }
 
-    .diagram-indicator {
+    .indicator-wrapper {
+      width: 58px;
+      height: 100px;
+      position: relative;
     }
 
-    .indicator-background {
-    }
-
-    .indicator-fill {
-    }
-
-    .middle-line {
+    .indicator-shadow {
+      position: absolute;
+      width: 100%;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      border-radius: 5px;
+      box-shadow: 0px 41.778px 33.422px 0px rgba(62, 200, 150, 0.14), 0px 22.336px 17.869px 0px rgba(62, 200, 117, 0.12), 0px 12.522px 10.017px 0px rgba(62, 200, 167, 0.10), 0px 6.65px 5.32px 0px rgba(62, 200, 167, 0.08), 0px 2.767px 2.214px 0px rgba(62, 200, 159, 0.05);
     }
   </style>
 </head>
@@ -94,11 +98,11 @@
 
     const fill = '#42C777';
 
-    const dropShadow = `drop-shadow(0px 41.778px 33.422px rgba(62, 200, 150, 0.14)) 
-      drop-shadow(0px 22.336px 17.869px rgba(62, 200, 117, 0.12)) 
-      drop-shadow(0px 12.522px 10.017px rgba(62, 200, 167, 0.10))
-      drop-shadow(0px 6.65px 5.32px rgba(62, 200, 167, 0.08))
-      drop-shadow(0px 2.767px 2.214px rgba(62, 200, 159, 0.05))`;
+    const dropShadow = `drop-shadow(0px 41.778px 33.422px rgba(200, 62, 62, 0.14)) 
+      drop-shadow(0px 22.336px 17.869px rgba(200, 62, 62, 0.12)) 
+      drop-shadow(0px 12.522px 10.017px rgba(200, 62, 62, 0.10))
+      drop-shadow(0px 6.65px 5.32px rgba(200, 62, 62, 0.08))
+      drop-shadow(0px 2.767px 2.214px rgba(200, 62, 62, 0.05))`;
 
     const body = d3.select('body');
 
@@ -129,14 +133,19 @@
       .attr('class', 'diagram-label')
       .text(diagramTitle);
 
+    const indicatorWrapper = diagramWrapper.append('div')
+      .attr('class', 'indicator-wrapper');
+    
+    const indicatorShadow = indicatorWrapper.append('div')
+      .attr('class', 'indicator-shadow')
+      .style('width', `${svgWidth}px`);
+
     // Indicator
-    const svg = diagramWrapper.append('svg')
+    const svg = indicatorWrapper.append('svg')
       .attr('class', 'diagram-indicator')
       .attr('width', svgWidth)
       .attr('height', svgHeight)
-      .attr('viewBox', `0 0 ${svgWidth} ${svgHeight}`)
-      .attr('preserveAspectRatio', 'xMidYMid meet')
-      .style('overflow', 'visible')
+      /* .style('overflow', 'visible') */
       .style('border-radius', '5px');
 
     // Background
@@ -151,54 +160,19 @@
       .style('fill', '#151C27');
 
     // Indicator fill
-
-    // Построение индикатора
-    function getIndicatorPath(indicatorValue) {
-      const height = indicatorValue > 100 
-        ? 100 
-        : (indicatorValue / 100) * svgHeight;
-
-      const diff = svgHeight - indicatorValue; // Разница между высотой и высотой индикатора
-      const arcRadius = Math.min(5, height / 2); // Радиус дуги для малых значений
-      const arcRadiusTop = height >= 95 
-        ? Math.min(5, (diff || height) / 2) 
-        : 0; // Радиус дуги для значений выше 95%
-      const adjustedHeight = height > arcRadius 
-        ? height - arcRadius 
-        : height; // Корректировка высоты
-
-      // Построение слева направо по часовой стрелке начиная с значения индикатора (оно же высота)
-      return `
-        M0,${svgHeight - height}
-        h${svgWidth - arcRadiusTop} 
-        a${arcRadiusTop},${arcRadiusTop} 0 0 1 ${arcRadiusTop},${arcRadiusTop} 
-        v${adjustedHeight - arcRadiusTop || arcRadius} 
-        a${arcRadius},${arcRadius} 0 0 1 -${arcRadius},${arcRadius} 
-        h-${svgWidth - arcRadius * 2} 
-        a${arcRadius},${arcRadius} 0 0 1 -${arcRadius},-${arcRadius} 
-        v-${adjustedHeight - arcRadiusTop || arcRadius} 
-        a${arcRadiusTop},${arcRadiusTop} 0 0 1 ${arcRadiusTop},-${arcRadiusTop} 
-      z`;
-    };
-
-    // Line middle
-    if (indicatorValue > 0) {
-      const indicatorFill = svg.append('path')
+    const indicatorFill = svg.append('rect')
       .attr('class', 'indicator-fill')
-      .attr('d', getIndicatorPath(0))
+      .attr('x', 0)
+      .attr('y', svgHeight)
+      .attr('width', svgWidth)
+      .attr('height', 0)
+      .attr('rx', 0)
+      .attr('ry', 5)
       .style('fill', fill)
       .style('filter', dropShadow);
 
-      indicatorFill
-      .transition()
-      .duration(duration)
-      .attrTween('d', function() {
-        const interpolateValue = d3.interpolate(0, indicatorValue); // Анимация от 0 до конечного значения
-        return function(t) {
-          return getIndicatorPath(interpolateValue(t)); // Обновляем пути по промежуточному значению
-        };
-      });
-
+    // Line middle
+    if (indicatorValue > 0) {
       svg.append('line')
         .attr('class', 'middle-line')
         .attr('x1', 0)
@@ -236,7 +210,27 @@
       svg.append('path')
         .attr('d', `M0 ${52 + 4 * gap - shiftUp} L58 ${86 + 4 * gap - shiftUp} L58 ${99 + 4 * gap - shiftUp} L0 ${65 + 4 * gap - shiftUp} Z`)
         .style('fill', '#1C232E');
+
+      svg.append('path')
+        .attr('d', `M0 ${65 + 5 * gap - shiftUp} L58 ${99 + 5 * gap - shiftUp} L58 ${112 + 5 * gap - shiftUp} L0 ${78 + 5 * gap - shiftUp} Z`)
+        .style('fill', '#1C232E');
+
+      svg.append('path')
+        .attr('d', `M0 ${78 + 5 * gap - shiftUp} L58 ${112 + 5 * gap - shiftUp} L58 ${125 + 5 * gap - shiftUp} L0 ${91 + 5 * gap - shiftUp} Z`)
+        .style('fill', '#1C232E');
     }
+
+    // Animation
+    indicatorFill
+      .transition()
+      .duration(duration)
+      .attr('height', (indicatorValue / 100) * svgHeight)
+      .attr('y', svgHeight - (indicatorValue / 100) * svgHeight);
+
+    indicatorShadow
+      .transition()
+      .duration(duration)
+      .style('height', `${(indicatorValue / 100) * svgHeight}px`);
   </script>
 </body>
 </html>

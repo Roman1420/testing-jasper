@@ -65,23 +65,27 @@
       align-items: center;
     }
 
-    .diagram-indicator {
+    .indicator-wrapper {
+      width: 58px;
+      height: 100px;
+      position: relative;
     }
 
-    .indicator-background {
-    }
-
-    .indicator-fill {
-    }
-
-    .middle-line {
+    .indicator-shadow {
+      position: absolute;
+      width: 100%;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      border-radius: 5px;
+      box-shadow: 0px 41.778px 33.422px 0px rgba(62, 150, 200, 0.14), 0px 22.336px 17.869px 0px rgba(62, 134, 200, 0.12), 0px 12.522px 10.017px 0px rgba(62, 101, 200, 0.10), 0px 6.65px 5.32px 0px rgba(62, 117, 200, 0.08), 0px 2.767px 2.214px 0px rgba(62, 125, 200, 0.05);
     }
   </style>
 </head>
 <body>
   <script>
     // Indicator value
-    const indicatorValue = 98;
+    const indicatorValue = 100;
     const diagramTitle = 'Flow density';
     const diagramUnit = indicatorValue > 0 
       ? 'v/km' 
@@ -129,8 +133,15 @@
       .attr('class', 'diagram-label')
       .text(diagramTitle);
 
+    const indicatorWrapper = diagramWrapper.append('div')
+      .attr('class', 'indicator-wrapper');
+    
+    const indicatorShadow = indicatorWrapper.append('div')
+      .attr('class', 'indicator-shadow')
+      .style('width', `${svgWidth}px`);
+
     // Indicator
-    const svg = diagramWrapper.append('svg')
+    const svg = indicatorWrapper.append('svg')
       .attr('class', 'diagram-indicator')
       .attr('width', svgWidth)
       .attr('height', svgHeight)
@@ -215,6 +226,11 @@
       .duration(duration)
       .attr('height', (indicatorValue / 100) * svgHeight)
       .attr('y', svgHeight - (indicatorValue / 100) * svgHeight);
+
+    indicatorShadow
+      .transition()
+      .duration(duration)
+      .style('height', `${(indicatorValue / 100) * svgHeight}px`);
   </script>
 </body>
 </html>
