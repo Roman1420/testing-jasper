@@ -160,106 +160,106 @@ const data = [
   {
     dateTime: "2023-01-01T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 200
   },
   {
     dateTime: "2023-01-02T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 180
   },
   {
     dateTime: "2023-01-03T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 170
   },
   {
     dateTime: "2023-01-04T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 240
   },
   {
     dateTime: "2023-01-05T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 230,
 		transportTypes: "Cars, buses"
   },
   {
     dateTime: "2023-01-06T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 50
   },
   {
     dateTime: "2023-01-07T00:00:00.000Z",
     comparisonObjectName: "objB",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 100
   },
   {
     dateTime: "2023-01-01T00:00:00.000Z",
     comparisonObjectName: "objC",
-    camNames:"Camera Y",
+    camName:"Camera Y",
     value: 300
   },
   {
     dateTime: "2023-01-02T00:00:00.000Z",
     comparisonObjectName: "objC",
-    camNames:"Camera Y",
+    camName:"Camera Y",
     value: 200
   },
   {
     dateTime: "2023-01-01T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera H",
+    camName:"Camera H",
     value: 150
   },
   {
     dateTime: "2023-01-02T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera H",
+    camName:"Camera H",
     value: 150
   },
   {
     dateTime: "2023-01-03T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera H",
+    camName:"Camera H",
     value: 150
   },
   {
     dateTime: "2023-01-04T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera H",
+    camName:"Camera H",
     value: 145
   },
   {
     dateTime: "2023-01-05T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera H",
+    camName:"Camera H",
     value: 350,
 		transportTypes: "Moto, trucs"
   },
   {
     dateTime: "2023-01-05T00:00:00.000Z",
     comparisonObjectName: "objC",
-    camNames:"Camera A",
+    camName:"Camera A",
     value: 20,
 		transportTypes: "All"
   },
   {
     dateTime: "2023-01-06T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera B",
+    camName:"Camera B",
     value: 500
   },
   {
     dateTime: "2023-01-07T00:00:00.000Z",
     comparisonObjectName: "objA",
-    camNames:"Camera H",
+    camName:"Camera H",
     value: 250
   },
 ];
@@ -335,37 +335,36 @@ const yScale = d3.scaleLinear()
   .range([height, 0]);
 
 // Рисуем области
-const area = function (datum, field) {
-  return d3.area()
-    .x(d => xScale(new Date(d.dateTime))) // анимация снизу вверх
+const area = function(datum, boolean) {
+    return d3.area()
     .y0(height)
-    .y1(d => yScale(d[field] || 0))
-    // .x(function (d) { return field ? xScale(new Date(d.dateTime)) : 0; }) // если анимация слева направо 
+    .y1(function (d) { return yScale(d.value); })
+    .x(function (d) { return boolean ? xScale(new Date(d.dateTime)) : 0; })
     (datum);
-};
+}
 
 // Рисуем график
 const nestedData = d3.group(data, d => d.comparisonObjectName);
 nestedData.forEach((values, key) => {
 	svg.append("path")
-    /* .datum(values) */
-    .attr('class', 'area')
-    .attr('d', area(values))
-    .attr("fill", () => `url(#gradient${color.indexOf(colorScale(key))})`/* colorScale(key) */)
+    .data([values])
+    .attr("class", "area")
+    .attr("d", d => area(d, false))
+    .attr("fill", `url(#gradient${color.indexOf(colorScale(key))})`)
     .attr("stroke", colorScale(key))
     .attr("stroke-width", 1)
-    /* .attr("stroke-opacity", 0.7) */
-    /* .attr("opacity", 0.3) */
-    .transition().duration(duration) // Длительность анимации
-    .attr("d", area(values, "value"));
+    .transition()
+    .duration(2000)
+    .attr("d", d => area(d, "value"));
 });
+
 
 // Добавление X оси и тиков соответствующих интервалам
 const xAxis = svg.append("g")
   .attr("transform", `translate(0,${height})`)
   .call(
     d3.axisBottom(xScale)
-    .ticks(interval)  // Установка интервала меток 
+    /* .ticks(interval) */  // Установка интервала меток 
     .tickFormat(format)  // Форматирование меток (формат даты/времени)
     // .ticks(/* data.length *//* d3.timeWeek.every(1) */)
   )
@@ -421,7 +420,7 @@ const getTooltipContent = (data) => {
             fill="${colorScale(data.comparisonObjectName)}"
             />
         </svg>
-      <div class="tooltip-camera">${data.camNames}</div>
+      <div class="tooltip-camera">${data.camName}</div>
       <div class="tooltip-transport">${data.transportTypes || ""}</div>
       <div class="tooltip-value">
         <span class="tooltip-value-text">${data.value}</span>
@@ -445,9 +444,9 @@ const circles = svg.selectAll(".circle")
 
 
 circles
-.on("mouseover", (event, d) => handleMouseOver(event, d))
-.on("mousemove", (event, d) => handleMouseMove(event, d))
-.on("mouseout", (event) =>handleMouseOut(event));
+  .on("mouseover", (event, d) => handleMouseOver(event, d))
+  .on("mousemove", (event, d) => handleMouseMove(event, d))
+  .on("mouseout", (event) =>handleMouseOut(event));
 
 // Создание прямоугольника для каждой группы
 const rectWidth = width / data.length; // ширина каждого прямоугольника
@@ -502,7 +501,7 @@ const handleMouseOver = (event, d) => {
   if (closestData.length) {
     // Обновляем заголовок
     tooltip.select(".tooltip-title").text(`${moment(dateTime).format("YYYY-MM-DD HH:mm")}`);
-    // const tooltipContent = closestData.map(d => `${d.camNames} - ${d.value}`).join("<br>");
+    // const tooltipContent = closestData.map(d => `${d.camName} - ${d.value}`).join("<br>");
 		const hasTrasportTypes = closestData.some(item => item.transportTypes);
 		tooltip
       .style("min-width", hasTrasportTypes 
