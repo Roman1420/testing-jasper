@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
-    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="../../../d3/d3.min.js"></script>
     <title>Traffic composition</title>
     <style>
       .pie-chart {
@@ -156,6 +156,7 @@
       const outerRadius = 100;
       const innerRadius = outerRadius * 0.7;
       const duration = 800;
+      const gap = 0.03; // Угол разрыва
 
       const body = d3.select('body');
       const pieChart = body
@@ -189,6 +190,9 @@
           return;
         }
 
+        // сортируем данные
+        data.sort((a, b) => b.value - a.value);
+
         const pieChartWrapper = pieChart
           .append('div')
           .attr('class', 'pie-chart-wrapper');
@@ -212,8 +216,6 @@
         // Генератор круговой диаграммы
         const pie = d3.layout.pie()
           .value(d => d.value)
-          .sort(null) 
-          .padAngle(0.03);
 
         const arc = d3.svg.arc()
           .outerRadius(outerRadius)
@@ -240,11 +242,14 @@
             .attr("dx", "0")
             .attr("dy", "3")
             .attr("stdDeviation", d.data.value > 10 ? '4' : '2')
-            .attr("flood-color", d3.rgb(color).darker(1.5))
+            .attr("flood-color", d3.rgb(color).darker(2))
 
           // Добавляем путь с тенью
           group.append("path")
-              .attr('d', d => arc({ ...d, endAngle: d.startAngle }))
+              .attr('d', d => {
+                d.endAngle -= gap;
+                return arc({ ...d, endAngle: d.startAngle });
+              })
               .attr("fill", color)
               .attr('filter', `url(#shadow-${d.data.label.replace(/\s+/g, '')})`) // Применяем цветную тень
               .transition()
