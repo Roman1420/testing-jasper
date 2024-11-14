@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Traffic flow composition</title>
+    <style>
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-family: "Golos Text", sans-serif;
+            background-color: var(--background-content, #1C232E);
+        }
+
+        .chart-title {
+            color: var(--text-secondary, #76879F);
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 24px;
+            text-align: left;
+        }
+
+        .text-axis {
+            fill: var(--text-tertiary, #5F656C);
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 20px;
+        }
+
+        .chart-label {
+            fill: var(--text-primary, #E3EBF3);
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 600;
+            line-height: 14px; /* 116.667% */
+        }
+
+        .no-data {
+            color: var(--text-secondary, #76879F);
+            text-align: center;
+            font-size: 24px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 40px; /* 166.667% */
+            letter-spacing: 0.24px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const data = [
+            {name: 'Cars', values: [
+                {value: 15, color: '#4A95FF'},
+                {value: 75, color: '#20CFDF'},
+            ]},
+            {name: 'Trucks', values: [
+                {value: 33, color: '#4A95FF'},
+                {value: 67, color: '#20CFDF'}
+            ]},
+            {name: 'Buses', values: [
+                {value: 22, color: '#4A95FF'},
+                {value: 3, color: '#20CFDF'}
+            ]},
+            {name: 'Minitrucks', values: [
+                {value: 0, color: '#4A95FF'},
+                {value: 22, color: '#20CFDF'}
+            ]},
+            {name: 'Minibuses', values: [
+                {value: 2, color: '#4A95FF'},
+                {value: 11, color: '#20CFDF'}
+            ]},
+            {name: 'Motorcycles', values: [
+                {value: 2, color: '#4A95FF'},
+                {value: 0, color: '#20CFDF'}
+            ]}
+        ];
+
+        setTimeout(() => {
+            const data = [];
+            drawChart(data); // Перерисовка диаграммы
+        }, 5000);
+
+        const title = 'Traffic flow composition';
+        const noData = 'No data';
+
+        const width = 640;
+        const height = 280;
+        const marginTop = 0;
+        const marginRight = 0;
+        const marginBottom = 24;
+        const marginLeft = 96;
+        const duration = 800;
+
+        const colorCell = '#212834';
+        const heightBar = 6;
+        const distanceBetweenBars = 3;
+        const tickSize = 16;
+        const minNumberCell = 80;
+
+        const chartWidth = width - marginLeft - marginRight;
+        const chartHeight = height - marginTop - marginBottom;
+
+        const chartContainer = d3.select('body')
+            .append('div')
+            .attr('class', 'chart-container');
+
+        const drawChart = (data) => {
+            // очищаем содержимое контейнера
+            chartContainer.selectAll('*').remove();
+
+            if (!data || !data.length) {
+                const noDataContainer = chartContainer
+                    .append('div')
+                    .style('width', '100%')
+                    .style('height', '100%')
+                    .style('display', 'flex')
+                    .style('align-items', 'center')
+                    .style('justify-content', 'center');
+
+                noDataContainer.append('div')
+                    .attr('class', 'no-data')
+                    .text(noData);
+                return;
+            }
+
+            chartContainer.append('div')
+                .attr('class', 'chart-title')
+                .text(title);
+
+            const svg = chartContainer.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Сортировка данных в алфавитном порядке
+            data.sort((a, b) => a.name > b.name);
+
+            const getMaxValue = () => {
+                const value = d3.max(data, d => d3.max(d.values.map(v => v.value)));
+                return value < minNumberCell ? minNumberCell : value;
+            };
+
+            const maxValue = getMaxValue();
+
+            const getTickStep = () => {
+                const thresholds = [
+                        { limit: 160000, value: 15000 },
+                        { limit: 100000, value: 10000 },
+                        { limit: 20000, value: 5000 },
+                        { limit: 9000, value: 1000 },
+                        { limit: 3900, value: 500 },
+                        { limit: 1500, value: 200 },
+                        { limit: 950, value: 100 },
+                        { limit: 400, value: 50 },
+                        { limit: 200, value: 20 },
+                    ];
+
+                    return thresholds.find(threshold => maxValue > threshold.limit)?.value || 10;
+            };
+
+            const tickStep = getTickStep();
+
+            const y = d3.scaleBand()
+                .domain(data.map(d => d.name))
+                .range([0, chartHeight])
+                .padding(0);
+
+            const x = d3.scaleLinear()
+                .domain([0, Math.ceil(maxValue / tickStep) * tickStep + tickStep]) // Устанавливаем диапазон по оси X
+                .range([0, chartWidth]);
+
+            // Создание осей
+            const xAxis = d3.axisBottom(x)
+                .ticks(Math.ceil(maxValue / tickStep))
+                .tickSizeOuter(0)
+                .tickSizeInner(tickSize)
+                .tickFormat((d, i) => d === 0 ? 0 : d3.format(".2s")(d));
+
+            const yAxis = d3.axisLeft(y)
+                .ticks(Math.ceil(maxValue / 10))
+                .tickSize(0)
+                .tickFormat(d => d);
+
+            // Добавление осей
+            svg.append('g')
+                .attr("class", "axis axis--x")
+                .attr("transform", `translate(${marginLeft},${chartHeight})`)
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "axis axis--y")
+                .attr("transform", `translate(${marginLeft},${marginTop})`)
+                .call(yAxis);
+
+            // Стилизация осей
+            svg.selectAll('.axis--x text')
+                .attr('dx', (d, index) => index ? (x(d) / index / 2) : (x(tickStep) / 2))
+                .attr('dy', 0)
+                .attr('class', 'text-axis');
+
+            svg.selectAll('.axis--y text')
+                .attr('text-anchor', 'start')
+                .attr('x', 0)
+                .attr('transform', `translate(${-marginLeft},0)`)
+                .attr('class', 'text-axis');
+
+            svg.selectAll('line').attr('stroke', colorCell);
+            svg.selectAll('.domain').attr('stroke', colorCell);
+
+            // Добавление сетки
+            const gridGroup = svg.append("g")
+                .attr("class", "grid")
+                .attr("transform", `translate(${marginLeft},${marginTop})`);
+
+            // Вертикальные линии сетки (каждые 10 единиц)
+            gridGroup.selectAll(".grid-line-x")
+                .data(x.ticks(Math.ceil(maxValue / tickStep)))
+                .enter()
+                .append("line")
+                .attr("class", "grid-line-x")
+                .attr("x1", d => x(d))
+                .attr("x2", d => x(d))
+                .attr("y1", 0)
+                .attr("y2", chartHeight)
+                .style("stroke", colorCell);
+
+            // Горизонтальные линии сетки (по каждой категории)
+            gridGroup.selectAll(".grid-line-y")
+            .data(data)
+            .enter()
+            .append("line")
+            .attr("class", "grid-line-y")
+            .attr("x1", -tickSize)
+            .attr("x2", chartWidth)
+            .attr("y1", (d) => y(d.name))
+            .attr("y2", (d) => y(d.name))
+            .style("stroke", colorCell);
+
+            // Создаем группу для баров
+            const groups = svg.selectAll('.group')
+                .data(data)
+                .enter()
+                .append('g')
+                .attr('class', 'group')
+                .attr('transform', (d) => {
+                    const heightAllBars = d.values.length * heightBar + (d.values.length - 1) * distanceBetweenBars;
+                    const indent = (y.bandwidth() - heightAllBars) / 2;
+                    return `translate(${marginLeft}, ${y(d.name) - y.bandwidth() + indent})`; // Центрируем группу по середине ячейки
+                });
+
+            // Добавляем бары
+            groups.selectAll('.bar')
+                .data(d => d.values.map((v, index) => ({...v, index, name: d.name})))
+                .enter()
+                .append('rect')
+                .attr('class', 'bar')
+                .attr('x', 0)
+                .attr('y', (d, i) => {
+                    return y.bandwidth() + (i * (heightBar + distanceBetweenBars))
+                })
+                .attr('width', 0) // Начальная ширина бара
+                .attr('fill', (v) => v.color) // Цвет заливки на основе данных
+                .attr('height', heightBar)
+                .attr('rx', heightBar / 2) // Радиус закругления углов по оси X
+                .attr('ry', heightBar / 2) // Радиус закругления углов по оси Y
+                .transition()
+                .duration(duration)
+                .attr('width', d => x(d.value));
+
+            // Подпись для баров
+            groups.selectAll('.chart-label')
+                .data(d => d.values.map((v, index) => ({...v, index, name: d.name})))
+                .enter()
+                .append('text')
+                .attr('class', 'chart-label')
+                .attr('x', 0)
+                .attr('y', (d, i) => {
+                    return (y.bandwidth() + (i * (heightBar + distanceBetweenBars))) + heightBar * 2 // опускаем значение бара к его нижней границе
+                })
+                .text(d => d.value)
+                .transition()
+                .duration(duration)
+                .attr('x', d => x(d.value) + 3);
+        };
+
+        drawChart(data);  // Изначальная отрисовка графика
+    </script>
+</body>
+</html>
