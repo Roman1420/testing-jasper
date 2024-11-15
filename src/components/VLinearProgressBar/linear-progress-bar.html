@@ -29,13 +29,13 @@
       line-height: 24px;
     }
 
-    .indicator-wrapper {
+    .linear-wrapper {
       width: 100%;
       height: 32px;
       position: relative;
     }
 
-    .indicator-shadow {
+    .linear-shadow {
       position: absolute;
       max-width: 100%;
       border-radius: 8px;
@@ -71,11 +71,11 @@
     const barTitle = 'Intensity';
     const duration = 1000;
 
-    const dropShadow = `drop-shadow(0px 41.778px 33.422px rgba(62, 150, 200, 0.14))
-      drop-shadow(0px 22.336px 17.869px rgba(62, 134, 200, 0.12))
-      drop-shadow(0px 12.522px 10.017px rgba(62, 101, 200, 0.10))
-      drop-shadow(0px 6.65px 5.32px rgba(62, 117, 200, 0.08))
-      drop-shadow(0px 2.767px 2.214px rgba(62, 125, 200, 0.05))`;
+    const boxShadow = `0px 41.778px 33.422px 0px rgba(62, 150, 200, 0.14), 
+      0px 22.336px 17.869px 0px rgba(62, 134, 200, 0.12), 
+      0px 12.522px 10.017px 0px rgba(62, 101, 200, 0.10), 
+      0px 6.65px 5.32px 0px rgba(62, 117, 200, 0.08), 
+      0px 2.767px 2.214px 0px rgba(62, 125, 200, 0.05)`;
 
     const barWrapper = d3.select('body')
       .append('div')
@@ -90,10 +90,10 @@
       .attr('class', 'bar-container')
       
     const indicatorWrapper = barContainer.append('div')
-      .attr('class', 'indicator-wrapper');
+      .attr('class', 'linear-wrapper');
 
     const indicatorShadow = indicatorWrapper.append('div')
-      .attr('class', 'indicator-shadow')
+      .attr('class', 'linear-shadow')
       .style('width', 0)
       .style('height', `${height}px`);
 
@@ -117,8 +117,7 @@
       .attr('y', 0)
       .attr('width', 0)
       .attr('height', height)
-      .style('fill', '#2E7AE5')
-      .style('filter', dropShadow);
+      .style('fill', '#2E7AE5');
 
     // Анимация
     progressBar.transition()
