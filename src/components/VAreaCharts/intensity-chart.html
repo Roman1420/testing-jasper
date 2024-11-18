@@ -15,6 +15,8 @@
 
 <style>
 #chart {
+  width: 100%;
+  height: 100%;
   font-family: "Golos Text", sans-serif;
   text-align: center;
   display: flex;
@@ -30,6 +32,9 @@
   background: #1C232E;
 }
 
+.area-chart {
+  overflow: visible;
+}
 .area-title {
   text-align: left;
   color: var(--text-secondary, #76879F);
@@ -37,7 +42,7 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 600;
-  line-height: 24px; /* 150% */
+  line-height: 24px;
 }
 
 .tick-text {
@@ -48,14 +53,13 @@
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
-  line-height: 20px; /* 142.857% */
+  line-height: 20px;
 }
 
 .tooltip {
   position: absolute;
   display: flex;
   min-width: 240px;
-  /* max-width: 307px; */
   padding: 0px 12px 8px 12px;
   flex-direction: column;
   align-items: flex-start;
@@ -80,7 +84,7 @@
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 24px; /* 133.333% */
+  line-height: 24px;
   letter-spacing: 0.18px;
 }
 
@@ -160,30 +164,35 @@ const data = [
   {
     dateTime: "2023-01-01T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 200
   },
   {
     dateTime: "2023-01-02T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 180
   },
   {
     dateTime: "2023-01-03T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 170
   },
   {
     dateTime: "2023-01-04T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 240
   },
   {
     dateTime: "2023-01-05T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 230,
 		transportTypes: "Cars, buses"
@@ -191,54 +200,63 @@ const data = [
   {
     dateTime: "2023-01-06T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 50
   },
   {
     dateTime: "2023-01-07T00:00:00.000Z",
     comparisonObjectName: "objB",
+    color: "#2E7AE5",
     camName:"Camera B",
     value: 100
   },
   {
     dateTime: "2023-01-01T00:00:00.000Z",
     comparisonObjectName: "objC",
+    color: "#20CFDF",
     camName:"Camera Y",
     value: 300
   },
   {
     dateTime: "2023-01-02T00:00:00.000Z",
     comparisonObjectName: "objC",
+    color: "#20CFDF",
     camName:"Camera Y",
     value: 200
   },
   {
     dateTime: "2023-01-01T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera H",
     value: 150
   },
   {
     dateTime: "2023-01-02T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera H",
     value: 150
   },
   {
     dateTime: "2023-01-03T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera H",
     value: 150
   },
   {
     dateTime: "2023-01-04T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera H",
     value: 145
   },
   {
     dateTime: "2023-01-05T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera H",
     value: 350,
 		transportTypes: "Moto, trucs"
@@ -246,6 +264,7 @@ const data = [
   {
     dateTime: "2023-01-05T00:00:00.000Z",
     comparisonObjectName: "objC",
+    color: "#20CFDF",
     camName:"Camera A",
     value: 20,
 		transportTypes: "All"
@@ -253,20 +272,18 @@ const data = [
   {
     dateTime: "2023-01-06T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera B",
     value: 500
   },
   {
     dateTime: "2023-01-07T00:00:00.000Z",
     comparisonObjectName: "objA",
+    color: "#42C777",
     camName:"Camera H",
     value: 250
   },
 ];
-
-const colorScale = d3.scaleOrdinal()
-    .domain([...new Set(data.map(d => d.comparisonObjectName))])
-    .range(["#2E7AE5", "#20CFDF", "#42C777", "#9D57D3", "#FA0"]);
 
 const color = [
     "#2E7AE5", 
@@ -284,8 +301,8 @@ const height = 300 - margin.top - margin.bottom;
 const duration = 1500;
 const tootlipsDuration = 200;
 
-const format = d3.timeFormat("%d %b");
-const interval = d3.timeDay.every(1);  // либо 0.5, либо timeWeek, либо timeMonth
+const format = d3.timeFormat("%d.%m %H:%M"); // По дефолту дата в формате "день.месяц часы:минуты"
+const interval = d3.timeDay.every(1);  // либо 0.5, либо timeWeek, либо timeMonth (пока не используется)
 
 d3.select("#chart").append('div')
   .attr('class', 'area-title')
@@ -295,8 +312,9 @@ d3.select("#chart").append('div')
 
 const svg = d3.select("#chart")
   .append("svg")
-  .attr("width", 638/* width + margin.left + margin.right */)
+  .attr("width", 638)
   .attr("height", height + margin.top + margin.bottom)
+  .attr("class", "area-chart")
   .append("g")
   .attr("transform", `translate(${5},${12})`)
   .style("background", "#1C232E");
@@ -341,7 +359,7 @@ const area = function(datum, boolean) {
     .y1(function (d) { return yScale(d.value); })
     .x(function (d) { return boolean ? xScale(new Date(d.dateTime)) : 0; })
     (datum);
-}
+};
 
 // Рисуем график
 const nestedData = d3.group(data, d => d.comparisonObjectName);
@@ -350,8 +368,8 @@ nestedData.forEach((values, key) => {
     .data([values])
     .attr("class", "area")
     .attr("d", d => area(d, false))
-    .attr("fill", `url(#gradient${color.indexOf(colorScale(key))})`)
-    .attr("stroke", colorScale(key))
+    .attr("fill", d => `url(#gradient${color.indexOf(d[0].color)})`)
+    .attr("stroke", d => d[0].color)
     .attr("stroke-width", 1)
     .transition()
     .duration(2000)
@@ -369,16 +387,18 @@ const xAxis = svg.append("g")
     // .ticks(/* data.length *//* d3.timeWeek.every(1) */)
   )
   .call(g => g.selectAll(".tick line").clone()
-    /* .attr("x1", 570) */
     .attr("y1", -((height)))
     .attr("stroke-opacity", 0.1)
     .style("fill", "#212834")
-  );
+  )
+  .selectAll("text")
+  .attr("transform", "rotate(-45)") // Поворот текста на -45 градусов
+  .style("text-anchor", "end"); // Якорь, чтобы текст не перекрывал ось;
 
 // Добавление Y оси и тиков
 svg.append("g")
-  .attr("transform", `translate(${width}, 0)`)  // Перемещаем ось Y вправо
-  .call(d3.axisRight(yScale))  // Используем d3.axisRight для размещения меток справа
+  .attr("transform", `translate(${width}, 0)`) // Перемещаем ось Y вправо
+  .call(d3.axisRight(yScale))  // axisRight для размещения меток справа
   .call(g => g.select(".domain").remove())
   .call(g => g.selectAll(".tick line").clone()
       .attr("x2", -(width))
@@ -402,6 +422,7 @@ const tooltip = d3.select("body")
 tooltip.append("div").attr("class", "tooltip-title");
 tooltip.append("div").attr("class", "tooltip-content");
 
+// Добавление разметки и данных для тултипа
 const getTooltipContent = (data) => {
   return `
     <div class="tooltip-item">
@@ -410,14 +431,14 @@ const getTooltipContent = (data) => {
             fill-rule="evenodd" 
             clip-rule="evenodd" 
             d="M12.4141 21C17.3846 21 21.4141 16.9706 21.4141 12C21.4141 7.02944 17.3846 3 12.4141 3C7.4435 3 3.41406 7.02944 3.41406 12C3.41406 16.9706 7.4435 21 12.4141 21Z" 
-            fill="${colorScale(data.comparisonObjectName)}" 
+            fill="${data.color}" 
             fill-opacity="0.2"
           />
           <path 
             fill-rule="evenodd" 
             clip-rule="evenodd" 
             d="M12.4141 17C15.1755 17 17.4141 14.7614 17.4141 12C17.4141 9.23858 15.1755 7 12.4141 7C9.65264 7 7.41406 9.23858 7.41406 12C7.41406 14.7614 9.65264 17 12.4141 17Z" 
-            fill="${colorScale(data.comparisonObjectName)}"
+            fill="${data.color}"
             />
         </svg>
       <div class="tooltip-camera">${data.camName}</div>
@@ -429,7 +450,7 @@ const getTooltipContent = (data) => {
   `
 };
 
-// Рисуем круги
+// Рисуем круги (опорные точки)
 const circles = svg.selectAll(".circle")
   .data(data)
   .enter()
@@ -438,25 +459,23 @@ const circles = svg.selectAll(".circle")
   .attr("cy", d => yScale(d.value))
   .attr("r", 4)
   .attr("stroke", "#212834")
-  .attr("fill", d => colorScale(d.comparisonObjectName))
-  // .transition().duration(duration) // Длительность анимации;
+  .attr("fill", d => d.color)
   .style("opacity", 0)
 
-
+// Вешаем обработчики для опорных точек
 circles
   .on("mouseover", (event, d) => handleMouseOver(event, d))
   .on("mousemove", (event, d) => handleMouseMove(event, d))
   .on("mouseout", (event) =>handleMouseOut(event));
 
 // Создание прямоугольника для каждой группы
-const rectWidth = width / data.length; // ширина каждого прямоугольника
 
 const groups = svg.selectAll(".hover-group")
   .data(data)
   .enter()
   .append("g")
   .attr("class", "hover-group")
-  .attr("transform", d => `translate(${xScale(new Date(d.dateTime)) - 10/* rectWidth */ / 2}, 0)`); 
+  .attr("transform", d => `translate(${xScale(new Date(d.dateTime)) - 10 / 2}, 0)`); 
 
 
 // Добавляем `hover-rect`, как раньше
@@ -464,7 +483,7 @@ groups.append("rect")
   .attr("class", "hover-rect")
   .attr("x", 0) // Положение относительно группы
   .attr("y", 0)
-  .attr("width", 10/* rectWidth */)
+  .attr("width", 10)
   .attr("height", height)
   .style("fill", "transparent")
   .on("mouseover", (event, d) => handleMouseOver(event, d))
@@ -474,12 +493,15 @@ groups.append("rect")
 // Добавляем `line-rect` поверх `hover-rect`, чтобы линия была по центру
 groups.append("rect")
   .attr("class", "line-rect")
-  .attr("x", 10/* rectWidth */ / 2 - 1) // чтобы линия была в центре `hover-rect`
+  .attr("x", 10 / 2 - 1) // чтобы линия была в центре `hover-rect`
   .attr("y", 0)
   .attr("width", 1) // Линия при ховере
   .attr("height", height)
   .style("fill", "#212834")
-  .style("opacity", 0);
+  .style("opacity", 0)
+  .on("mouseover", (event, d) => handleMouseOver(event, d))
+  .on("mousemove", (event, d) => handleMouseMove(event, d))
+  .on("mouseout", (event) => handleMouseOut(event));
 
 circles.raise(); //Нужно чтобы круги были поверх линий
 
@@ -501,8 +523,9 @@ const handleMouseOver = (event, d) => {
   if (closestData.length) {
     // Обновляем заголовок
     tooltip.select(".tooltip-title").text(`${moment(dateTime).format("YYYY-MM-DD HH:mm")}`);
-    // const tooltipContent = closestData.map(d => `${d.camName} - ${d.value}`).join("<br>");
+
 		const hasTrasportTypes = closestData.some(item => item.transportTypes);
+
 		tooltip
       .style("min-width", hasTrasportTypes 
         ? "307px"
@@ -535,7 +558,7 @@ const handleMouseOver = (event, d) => {
 
 const handleMouseMove = (event, d) => {
   tooltip
-    .style("left", (event.pageX <= 286/* 56 */
+    .style("left", (event.pageX <= 286
       ? (event.pageX + 10)
       : (event.pageX - tooltip.node().offsetWidth - 10)
     ) + "px")
