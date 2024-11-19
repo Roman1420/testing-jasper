@@ -94,6 +94,7 @@
         width: 12px;
         height: 12px;
         border-radius: 50%;
+        flex-shrink: 0;
       }
 
       .legend-label {
@@ -124,28 +125,13 @@
     <script>
       // Пример данных для диаграммы
       let data = [
-        { label: 'Buses', value: 3, color: '#049A8C' },
-        { label: 'Trucks', value: 7, color: '#DE9C19' },
-        { label: 'Cars', value: 61, color: '#FF606E' },
-        { label: 'Mini buses', value: 17, color: '#42C777' },
-        { label: 'Motorcycles', value: 5, color: '#AD6CC3' },
-        { label: 'Mini trucks', value: 10, color: '#2E7AE5' },
+        { label: 'Buses', value: 0.19, color: '#049A8C' },
+        { label: 'Trucks', value: 0.18, color: '#DE9C19' },
+        { label: 'Cars', value: 99.18, color: '#FF606E' },
+        { label: 'Minibuses', value: 0.28, color: '#42C777' },
+        { label: 'Motorcycles', value: 0, color: '#AD6CC3' },
+        { label: 'Minitrucks', value: 0.17, color: '#2E7AE5' },
       ];
-
-      setTimeout(() => {
-        data = [
-          { label: 'Buses', value: 10, color: '#049A8C' },
-          { label: 'Trucks', value: 2, color: '#DE9C19' },
-          { label: 'Cars', value: 61, color: '#FF606E' },
-          { label: 'Mini buses', value: 22, color: '#42C777' },
-        ];
-        drawPieChart(data); // Перерисовка диаграммы
-      }, 5000);
-
-      setTimeout(() => {
-        data = [];
-        drawPieChart(data); // Перерисовка диаграммы
-      }, 11000);
 
       const pieChartTitle = 'Traffic composition';
       const noData = 'No data';
@@ -162,33 +148,26 @@
         .append('div')
         .attr('class', 'pie-chart');
 
-      // функция отрисовки
-      const drawPieChart = (data) => {
-        // очищаем содержимое контейнера
-        pieChart.selectAll('*').remove();
+      pieChart
+        .append('div')
+        .attr('class', 'pie-chart-title')
+        .text(pieChartTitle);
 
-        pieChart
+      // если данных нет
+      if (!data || !data.length) {
+        const pieChartNoDataContainer = pieChart
           .append('div')
-          .attr('class', 'pie-chart-title')
-          .text(pieChartTitle);
+          .attr('class', 'pie-chart-no-data');
 
-        // если данных нет
-        if (!data || !data.length) {
-          const pieChartNoDataContainer = pieChart
-            .append('div')
-            .attr('class', 'pie-chart-no-data');
-          
-          pieChartNoDataContainer
-            .append('div')
-            .text(noData);
-          pieChartNoDataContainer
-            .append('div')
-            .attr('class', 'pie-chart-no-data-description')
-            .text(noDataSub);
-            
-          return;
-        }
+        pieChartNoDataContainer
+          .append('div')
+          .text(noData);
+        pieChartNoDataContainer
+          .append('div')
+          .attr('class', 'pie-chart-no-data-description')
+          .text(noDataSub);
 
+      } else {
         const pieChartWrapper = pieChart
           .append('div')
           .attr('class', 'pie-chart-wrapper');
@@ -209,23 +188,42 @@
           .append("g")
           .attr("transform", `translate(${svgWidth / 2}, ${svgHeight / 2})`);
 
+        const totalValue = data.reduce((sum, d) => sum + d.value, 0); // сумма всех значений (100%)
+        const minValue = totalValue * 0.01; // значение 1% от общей суммы
+
+        // Пересчитываем значения
+        const adjustedData = data
+          .filter(d => d.value)
+          .map(d => ({
+              ...d,
+              value: d.value < minValue ? minValue : d.value // Устанавливаем значение в 1% если меньше
+          }));
+
+        // Пересчитываем общую сумму после корректировки
+        const newTotalValue = adjustedData.reduce((sum, d) => sum + d.value, 0);
+
+        const normalizedData = adjustedData.map(d => ({
+          ...d,
+          value: (d.value / newTotalValue) * 100
+        }));
+
         // Генератор круговой диаграммы
         const pie = d3
           .pie()
           .value(d => d.value)
-          .sort(null) 
-          .padAngle(0.03); 
+          .sort(null)
+          .padAngle(0.02);
 
         const arc = d3
           .arc()
           .innerRadius(innerRadius)
           .outerRadius(outerRadius)
-          .cornerRadius(3);
+          .cornerRadius(2);
 
         // Создаем группы для каждого сегмента
         const arcs = svg
           .selectAll(".arc")
-          .data(pie(data))
+          .data(pie(normalizedData))
           .enter()
           .append("g")
           .attr("class", "arc");
@@ -265,7 +263,7 @@
             .append("div")
             .attr("class", "legend-item")
             .style("animation-delay", `${index * duration / 2}ms`); // Задержка для каждой легенды
-          
+
           legendItem
             .append('div')
             .attr('class', 'legend-color')
@@ -278,10 +276,7 @@
 
           legendItem.append('span').text(`${item.value}%`);
         });
-      };
-
-      // Изначальная отрисовка диаграммы
-      drawPieChart(data);
+      }
     </script>
   </body>
 </html>
