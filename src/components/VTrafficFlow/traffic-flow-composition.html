@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
     <title>Traffic flow composition</title>
     <style>
         .chart-container {
@@ -16,6 +16,7 @@
             gap: 12px;
             font-family: "Golos Text", sans-serif;
             background-color: var(--background-content, #1C232E);
+            overflow-x: scroll;
         }
 
         .chart-title {
@@ -82,11 +83,6 @@
             ]}
         ];
 
-        setTimeout(() => {
-            const data = [];
-            drawChart(data); // Перерисовка диаграммы
-        }, 5000);
-
         const title = 'Traffic flow composition';
         const noData = 'No data';
 
@@ -111,25 +107,20 @@
             .append('div')
             .attr('class', 'chart-container');
 
-        const drawChart = (data) => {
-            // очищаем содержимое контейнера
-            chartContainer.selectAll('*').remove();
+        // если нет данных
+        if (!data || !data.length) {
+            const noDataContainer = chartContainer
+                .append('div')
+                .style('width', '100%')
+                .style('height', '100%')
+                .style('display', 'flex')
+                .style('align-items', 'center')
+                .style('justify-content', 'center');
 
-            if (!data || !data.length) {
-                const noDataContainer = chartContainer
-                    .append('div')
-                    .style('width', '100%')
-                    .style('height', '100%')
-                    .style('display', 'flex')
-                    .style('align-items', 'center')
-                    .style('justify-content', 'center');
-
-                noDataContainer.append('div')
-                    .attr('class', 'no-data')
-                    .text(noData);
-                return;
-            }
-
+            noDataContainer.append('div')
+                .attr('class', 'no-data')
+                .text(noData);
+        } else {
             chartContainer.append('div')
                 .attr('class', 'chart-title')
                 .text(title);
@@ -287,9 +278,7 @@
                 .transition()
                 .duration(duration)
                 .attr('x', d => x(d.value) + 3);
-        };
-
-        drawChart(data);  // Изначальная отрисовка графика
+        }
     </script>
 </body>
 </html>
