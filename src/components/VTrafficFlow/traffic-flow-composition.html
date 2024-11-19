@@ -247,7 +247,7 @@
 
             // Добавляем бары
             groups.selectAll('.bar')
-                .data(d => d.values.map((v, index) => ({...v, index, name: d.name})))
+                .data(d => d.values.map((v, index) => (Object.assign({}, v, { index: index, name: d.name }))))
                 .enter()
                 .append('rect')
                 .attr('class', 'bar')
@@ -266,7 +266,7 @@
 
             // Подпись для баров
             groups.selectAll('.chart-label')
-                .data(d => d.values.map((v, index) => ({...v, index, name: d.name})))
+                .data(d => d.values.map((v, index) => (Object.assign({}, v, { index: index, name: d.name }))))
                 .enter()
                 .append('text')
                 .attr('class', 'chart-label')
