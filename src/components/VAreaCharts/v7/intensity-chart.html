@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-<title>Intensity chart</title>
-<script src="https://d3js.org/d3.v4.min.js"></script>
+<title>Area Chart with D3</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
 
 <style>
@@ -271,22 +271,6 @@ const data = [
   },
   {
     dateTime: "2023-01-06T00:00:00.000Z",
-    comparisonObjectName: "objC",
-    color: "#20CFDF",
-    camName:"Camera A",
-    value: 20,
-		transportTypes: "All"
-  },
-  {
-    dateTime: "2023-01-07T00:00:00.000Z",
-    comparisonObjectName: "objC",
-    color: "#20CFDF",
-    camName:"Camera A",
-    value: 150,
-		transportTypes: "All"
-  },
-  {
-    dateTime: "2023-01-06T00:00:00.000Z",
     comparisonObjectName: "objA",
     color: "#42C777",
     camName:"Camera B",
@@ -364,54 +348,32 @@ const xScale = d3.scaleUtc()
   .range([0, width]);
 
 const yScale = d3.scaleLinear()
-  .domain(d3.extent(data, d => d.value))
-  /* .nice() */ // Минимальное значение будет 0
+  .domain([0, d3.max(data, d => d.value)])
+  .nice()
   .range([height, 0]);
-
-const line = d3.line()
-  .x(d => xScale(new Date(d.dateTime)))
-  .y(d => yScale(d.value))
-  .curve(d3.curveLinear); // Стандартная кривая без сглаживания
 
 // Рисуем области
 const area = function(datum, boolean) {
     return d3.area()
-    /* .x(d => xScale(new Date(d.dateTime))) */ // Анимация снизу вверх
     .y0(height)
     .y1(function (d) { return yScale(d.value); })
-    /* .y1(function (d) { return boolean ? yScale(d.value) : yScale(0); }) */ // Анимация снизу вверх
-    .x(function (d) { return boolean ? xScale(new Date(d.dateTime)) : 0; }) // Анимация слева направо
+    .x(function (d) { return boolean ? xScale(new Date(d.dateTime)) : 0; })
     (datum);
 };
 
 // Рисуем график
-const nestedData = d3.nest().key((d) => d.comparisonObjectName).entries(data);
-
-nestedData.forEach((group, key) => {
+const nestedData = d3.group(data, d => d.comparisonObjectName);
+nestedData.forEach((values, key) => {
 	svg.append("path")
-    .datum(group.values)
+    .data([values])
     .attr("class", "area")
     .attr("d", d => area(d, false))
     .attr("fill", d => `url(#gradient${color.indexOf(d[0].color)})`)
-    // .attr("stroke", d => d[0].color) Если не используем line
-    // .attr("stroke-width", 1) Если не используем line
+    .attr("stroke", d => d[0].color)
+    .attr("stroke-width", 1)
     .transition()
-    .duration(duration)
-    .attr("d", d => area(d, "value"))
-    .on("end", function() {  // Анимация появления линии после отрисовки областей
-      svg.append("path")
-      .datum(group.values)
-      .attr("fill", "none")
-      .attr("stroke", d => d[0].color)
-      .attr("stroke-width", 1)
-      .attr("d", line)
-      .transition()
-      .duration(500)
-      .attrTween("opacity", function() {
-        const length = this.getTotalLength();
-        return d3.interpolate(`0`, `1`);
-    });
-  })
+    .duration(2000)
+    .attr("d", d => area(d, "value"));
 });
 
 
@@ -424,19 +386,14 @@ const xAxis = svg.append("g")
     .tickFormat(format)  // Форматирование меток (формат даты/времени)
     // .ticks(/* data.length *//* d3.timeWeek.every(1) */)
   )
-  .call(g => g.select(".domain")
-  .attr("stroke", "currentColor")
-  .attr("stroke-opacity", 0.1) // нижняя полоса на оси X при необходимости
-  /* .remove() */ // удаление нижней полосы
-  )
   .call(g => g.selectAll(".tick line").clone()
     .attr("y1", -((height)))
     .attr("stroke-opacity", 0.1)
+    .style("fill", "#212834")
   )
   .selectAll("text")
   .attr("transform", "rotate(-45)") // Поворот текста на -45 градусов
-  .style("text-anchor", "end") // Якорь, чтобы текст не перекрывал ось;
-  .attr("fill", "currentColor"); 
+  .style("text-anchor", "end"); // Якорь, чтобы текст не перекрывал ось;
 
 // Добавление Y оси и тиков
 svg.append("g")
@@ -451,21 +408,11 @@ svg.append("g")
   .selectAll("text")
   .attr("text-anchor", "start")
   .attr("class", "tick-text")
-  .attr("x", "25") // Отступ от линии до значений оси Y
-  .attr("fill", "currentColor");
+  .attr("x", "17");
 
 svg.selectAll("line")
-.attr("stroke", "currentColor")
-.attr("stroke-opacity", 0.1);
+.attr("stroke-opacity", 0.1)
 
-d3.selectAll("line[x2='6']") // Длина лини возле значений оси Y
-.attr("x2", '16');
-
-d3.selectAll("line[y2='6']") // Длина лини возле значений оси X
-.attr("y2", '16');
-
-d3.selectAll("text[y='9']") // (временно) Отступ от линий до значений оси X (убирается наложение)
-.attr("y", '19');
 
 // Создание тултипа
 const tooltip = d3.select("body")
@@ -517,15 +464,9 @@ const circles = svg.selectAll(".circle")
 
 // Вешаем обработчики для опорных точек
 circles
-  .on("mouseover",  function(d) {
-    handleMouseOver(d3.event, d)
-  })
-  .on("mousemove", function(d) {
-    handleMouseMove(d3.event, d)
-  })
-  .on("mouseout", function(d) {
-    handleMouseOut(d3.event)
-  });
+  .on("mouseover", (event, d) => handleMouseOver(event, d))
+  .on("mousemove", (event, d) => handleMouseMove(event, d))
+  .on("mouseout", (event) =>handleMouseOut(event));
 
 // Создание прямоугольника для каждой группы
 
@@ -545,15 +486,9 @@ groups.append("rect")
   .attr("width", 10)
   .attr("height", height)
   .style("fill", "transparent")
-  .on("mouseover",  function(d) {
-    handleMouseOver(d3.event, d)
-  })
-  .on("mousemove", function(d) {
-    handleMouseMove(d3.event, d)
-  })
-  .on("mouseout", function(d) {
-    handleMouseOut(d3.event)
-  });
+  .on("mouseover", (event, d) => handleMouseOver(event, d))
+  .on("mousemove", (event, d) => handleMouseMove(event, d))
+  .on("mouseout", (event) => handleMouseOut(event));
 
 // Добавляем `line-rect` поверх `hover-rect`, чтобы линия была по центру
 groups.append("rect")
@@ -564,15 +499,9 @@ groups.append("rect")
   .attr("height", height)
   .style("fill", "#212834")
   .style("opacity", 0)
-  .on("mouseover",  function(d) {
-    handleMouseOver(d3.event, d)
-  })
-  .on("mousemove", function(d) {
-    handleMouseMove(d3.event, d)
-  })
-  .on("mouseout", function(d) {
-    handleMouseOut(d3.event)
-  });
+  .on("mouseover", (event, d) => handleMouseOver(event, d))
+  .on("mousemove", (event, d) => handleMouseMove(event, d))
+  .on("mouseout", (event) => handleMouseOut(event));
 
 circles.raise(); //Нужно чтобы круги были поверх линий
 
@@ -636,16 +565,16 @@ const handleMouseMove = (event, d) => {
     .style("top", (event.pageY - 10) + "px")
     .style("opacity", 1);
 
-  if (event.target.localName === "circle") {
-    const closestData = data.filter(item => moment(item.dateTime).isSame(d.dateTime));
+		if (event.target.localName === "circle") {
+			const closestData = data.filter(item => moment(item.dateTime).isSame(d.dateTime));
 
-    circles
-      .style("opacity", (circleData) =>
-        closestData.every(data => moment(data.dateTime).isSame(moment(circleData.dateTime)))
-        ? 1 
-        : 0
-      );
-  }
+			circles
+				.style("opacity", (circleData) =>
+					closestData.every(data => moment(data.dateTime).isSame(moment(circleData.dateTime)))
+					? 1 
+					: 0
+				);
+		}
 };
 
 const handleMouseOut = (event) => {
