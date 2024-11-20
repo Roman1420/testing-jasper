@@ -130,16 +130,18 @@
                 .attr('height', height);
 
             // Сортировка данных в алфавитном порядке
-            data.sort((a, b) => a.name > b.name);
+            data.sort(function(a, b) { return a.name > b.name });
 
-            const getMaxValue = () => {
-                const value = d3.max(data, d => d3.max(d.values.map(v => v.value)));
+            const getMaxValue = function() {
+                const value = d3.max(data, function(d) {
+                    return d3.max(d.values.map(function(v) { return v.value }));
+                });
                 return value < minNumberCell ? minNumberCell : value;
             };
 
             const maxValue = getMaxValue();
 
-            const getTickStep = () => {
+            const getTickStep = function () {
                 const thresholds = [
                         { limit: 160000, value: 15000 },
                         { limit: 100000, value: 10000 },
@@ -152,13 +154,17 @@
                         { limit: 200, value: 20 },
                     ];
 
-                    return thresholds.find(threshold => maxValue > threshold.limit)?.value || 10;
+                const threshold = thresholds.find(function(threshold) {
+                  return maxValue > threshold.limit;
+                });
+
+                return threshold?.value || 10;
             };
 
             const tickStep = getTickStep();
 
             const y = d3.scaleBand()
-                .domain(data.map(d => d.name))
+                .domain(data.map(function(d) { return d.name }))
                 .range([0, chartHeight])
                 .padding(0);
 
@@ -171,34 +177,38 @@
                 .ticks(Math.ceil(maxValue / tickStep))
                 .tickSizeOuter(0)
                 .tickSizeInner(tickSize)
-                .tickFormat((d, i) => d === 0 ? 0 : d3.format(".2s")(d));
+                .tickFormat(function(d, i) {
+                    return d === 0 ? 0 : d3.format(".2s")(d);
+                });
 
             const yAxis = d3.axisLeft(y)
                 .ticks(Math.ceil(maxValue / 10))
                 .tickSize(0)
-                .tickFormat(d => d);
+                .tickFormat(function(d) { return d });
 
             // Добавление осей
             svg.append('g')
                 .attr("class", "axis axis--x")
-                .attr("transform", `translate(${marginLeft},${chartHeight})`)
+                .attr("transform", "translate(" + marginLeft + "," + chartHeight + ")")
                 .call(xAxis);
 
             svg.append("g")
                 .attr("class", "axis axis--y")
-                .attr("transform", `translate(${marginLeft},${marginTop})`)
+                .attr("transform", "translate(" + marginLeft + "," + marginTop + ")")
                 .call(yAxis);
 
             // Стилизация осей
             svg.selectAll('.axis--x text')
-                .attr('dx', (d, index) => index ? (x(d) / index / 2) : (x(tickStep) / 2))
+                .attr('dx', function(d, index) {
+                    return index ? (x(d) / index / 2) : (x(tickStep) / 2);
+                })
                 .attr('dy', 0)
                 .attr('class', 'text-axis');
 
             svg.selectAll('.axis--y text')
                 .attr('text-anchor', 'start')
                 .attr('x', 0)
-                .attr('transform', `translate(${-marginLeft},0)`)
+                .attr('transform', "translate(" + (-marginLeft) + "," + 0 + ")")
                 .attr('class', 'text-axis');
 
             svg.selectAll('line').attr('stroke', colorCell);
@@ -207,7 +217,7 @@
             // Добавление сетки
             const gridGroup = svg.append("g")
                 .attr("class", "grid")
-                .attr("transform", `translate(${marginLeft},${marginTop})`);
+                .attr("transform", "translate(" + marginLeft + "," + marginTop + ")");
 
             // Вертикальные линии сетки (каждые 10 единиц)
             gridGroup.selectAll(".grid-line-x")
@@ -215,8 +225,8 @@
                 .enter()
                 .append("line")
                 .attr("class", "grid-line-x")
-                .attr("x1", d => x(d))
-                .attr("x2", d => x(d))
+                .attr("x1", function(d) { return x(d) })
+                .attr("x2", function(d) { return x(d) })
                 .attr("y1", 0)
                 .attr("y2", chartHeight)
                 .style("stroke", colorCell);
@@ -229,8 +239,8 @@
             .attr("class", "grid-line-y")
             .attr("x1", -tickSize)
             .attr("x2", chartWidth)
-            .attr("y1", (d) => y(d.name))
-            .attr("y2", (d) => y(d.name))
+            .attr("y1", function(d) { return y(d.name) })
+            .attr("y2", function(d) { return y(d.name) })
             .style("stroke", colorCell);
 
             // Создаем группу для баров
@@ -239,45 +249,54 @@
                 .enter()
                 .append('g')
                 .attr('class', 'group')
-                .attr('transform', (d) => {
+                .attr('transform', function(d) {
                     const heightAllBars = d.values.length * heightBar + (d.values.length - 1) * distanceBetweenBars;
                     const indent = (y.bandwidth() - heightAllBars) / 2;
-                    return `translate(${marginLeft}, ${y(d.name) - y.bandwidth() + indent})`; // Центрируем группу по середине ячейки
+                    const yCoord = y(d.name) - y.bandwidth() + indent;
+                    return "translate(" + marginLeft + "," + yCoord + ")"; // Центрируем группу по середине ячейки
                 });
 
             // Добавляем бары
             groups.selectAll('.bar')
-                .data(d => d.values.map((v, index) => (Object.assign({}, v, { index: index, name: d.name }))))
+                .data(function(d) {
+                    return d.values.map(function(v, index) {
+                        return (Object.assign({}, v, { index: index, name: d.name }));
+                    });
+                })
                 .enter()
                 .append('rect')
                 .attr('class', 'bar')
                 .attr('x', 0)
-                .attr('y', (d, i) => {
-                    return y.bandwidth() + (i * (heightBar + distanceBetweenBars))
+                .attr('y', function(d, i) {
+                    return y.bandwidth() + (i * (heightBar + distanceBetweenBars));
                 })
                 .attr('width', 0) // Начальная ширина бара
-                .attr('fill', (v) => v.color) // Цвет заливки на основе данных
+                .attr('fill', function(v) { return v.color }) // Цвет заливки на основе данных
                 .attr('height', heightBar)
                 .attr('rx', heightBar / 2) // Радиус закругления углов по оси X
                 .attr('ry', heightBar / 2) // Радиус закругления углов по оси Y
                 .transition()
                 .duration(duration)
-                .attr('width', d => x(d.value));
+                .attr('width', function(d) { return x(d.value) });
 
             // Подпись для баров
             groups.selectAll('.chart-label')
-                .data(d => d.values.map((v, index) => (Object.assign({}, v, { index: index, name: d.name }))))
+                .data(function(d) {
+                    return d.values.map(function(v, index) {
+                        return (Object.assign({}, v, { index: index, name: d.name }));
+                    });
+                })
                 .enter()
                 .append('text')
                 .attr('class', 'chart-label')
                 .attr('x', 0)
-                .attr('y', (d, i) => {
+                .attr('y', function(d, i) {
                     return (y.bandwidth() + (i * (heightBar + distanceBetweenBars))) + heightBar * 2 // опускаем значение бара к его нижней границе
                 })
-                .text(d => d.value)
+                .text(function(d) {return d.value })
                 .transition()
                 .duration(duration)
-                .attr('x', d => x(d.value) + 3);
+                .attr('x', function(d) { return x(d.value) + 3 });
         }
     </script>
 </body>
