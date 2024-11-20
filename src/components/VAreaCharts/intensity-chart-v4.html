@@ -425,8 +425,9 @@ const xAxis = svg.append("g")
     // .ticks(/* data.length *//* d3.timeWeek.every(1) */)
   )
   .call(g => g.select(".domain")
-    // .attr("stroke", "currentColor") // нижняя полоса на оси X при необходимости
-    .remove()
+  .attr("stroke", "currentColor")
+  .attr("stroke-opacity", 0.1) // нижняя полоса на оси X при необходимости
+  /* .remove() */ // удаление нижней полосы
   )
   .call(g => g.selectAll(".tick line").clone()
     .attr("y1", -((height)))
@@ -450,13 +451,21 @@ svg.append("g")
   .selectAll("text")
   .attr("text-anchor", "start")
   .attr("class", "tick-text")
-  .attr("x", "17")
+  .attr("x", "25") // Отступ от линии до значений оси Y
   .attr("fill", "currentColor");
 
 svg.selectAll("line")
 .attr("stroke", "currentColor")
-.attr("stroke-opacity", 0.1)
+.attr("stroke-opacity", 0.1);
 
+d3.selectAll("line[x2='6']") // Длина лини возле значений оси Y
+.attr("x2", '16');
+
+d3.selectAll("line[y2='6']") // Длина лини возле значений оси X
+.attr("y2", '16');
+
+d3.selectAll("text[y='9']") // (временно) Отступ от линий до значений оси X (убирается наложение)
+.attr("y", '19');
 
 // Создание тултипа
 const tooltip = d3.select("body")
