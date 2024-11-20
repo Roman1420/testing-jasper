@@ -271,6 +271,22 @@ const data = [
   },
   {
     dateTime: "2023-01-06T00:00:00.000Z",
+    comparisonObjectName: "objC",
+    color: "#20CFDF",
+    camName:"Camera A",
+    value: 20,
+		transportTypes: "All"
+  },
+  {
+    dateTime: "2023-01-07T00:00:00.000Z",
+    comparisonObjectName: "objC",
+    color: "#20CFDF",
+    camName:"Camera A",
+    value: 150,
+		transportTypes: "All"
+  },
+  {
+    dateTime: "2023-01-06T00:00:00.000Z",
     comparisonObjectName: "objA",
     color: "#42C777",
     camName:"Camera B",
@@ -348,16 +364,23 @@ const xScale = d3.scaleUtc()
   .range([0, width]);
 
 const yScale = d3.scaleLinear()
-  .domain([0, d3.max(data, d => d.value)])
-  .nice()
+  .domain(d3.extent(data, d => d.value))
+  /* .nice() */ // Минимальное значение будет 0
   .range([height, 0]);
+
+const line = d3.line()
+  .x(d => xScale(new Date(d.dateTime)))
+  .y(d => yScale(d.value))
+  .curve(d3.curveLinear); // Стандартная кривая без сглаживания
 
 // Рисуем области
 const area = function(datum, boolean) {
     return d3.area()
+    /* .x(d => xScale(new Date(d.dateTime))) */ // Анимация снизу вверх
     .y0(height)
     .y1(function (d) { return yScale(d.value); })
-    .x(function (d) { return boolean ? xScale(new Date(d.dateTime)) : 0; })
+    /* .y1(function (d) { return boolean ? yScale(d.value) : yScale(0); }) */ // Анимация снизу вверх
+    .x(function (d) { return boolean ? xScale(new Date(d.dateTime)) : 0; }) // Анимация слева направо
     (datum);
 };
 
@@ -370,11 +393,25 @@ nestedData.forEach((group, key) => {
     .attr("class", "area")
     .attr("d", d => area(d, false))
     .attr("fill", d => `url(#gradient${color.indexOf(d[0].color)})`)
-    .attr("stroke", d => d[0].color)
-    .attr("stroke-width", 1)
+    // .attr("stroke", d => d[0].color) Если не используем line
+    // .attr("stroke-width", 1) Если не используем line
     .transition()
-    .duration(2000)
-    .attr("d", d => area(d, "value"));
+    .duration(duration)
+    .attr("d", d => area(d, "value"))
+    .on("end", function() {  // Анимация появления линии после отрисовки областей
+      svg.append("path")
+      .datum(group.values)
+      .attr("fill", "none")
+      .attr("stroke", d => d[0].color)
+      .attr("stroke-width", 1)
+      .attr("d", line)
+      .transition()
+      .duration(500)
+      .attrTween("opacity", function() {
+        const length = this.getTotalLength();
+        return d3.interpolate(`0`, `1`);
+    });
+  })
 });
 
 
